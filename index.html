@@ -523,7 +523,9 @@ function reset() {
 // ─── Drawing ───
 let lastTime = 0;
 function draw(now) {
+  now = now || performance.now();
   const dt = Math.min(50, now - lastTime);
+  if (!lastTime) lastTime = now;
   lastTime = now;
 
   const w = canvas.clientWidth;
@@ -634,9 +636,9 @@ function draw(now) {
     ctx.fill();
 
     ctx.restore();
-    requestAnimationFrame(draw);
+    requestAnimationFrame((t) => { lastTime = t; draw(t); });
     return;
-  }
+  
 
   // ───── DETONATION ─────
   const elapsed = (now - state.startTime) / 1000;
