@@ -2,7 +2,8 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0a0f">
 <title>Симулятор ядерного взрыва — учебный проект по физике</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,6 +16,11 @@
     --accent: #ff5722; --accent-2: #ffb800; --accent-3: #ff2d2d;
     --info: #00d9ff;
   }
+  @media (hover: none) {
+  .preset:hover { border-color: var(--line); background: var(--bg-soft); }
+  .detonate-btn:hover:not(:disabled) { transform: none; }
+  .reset-btn:hover { border-color: var(--line); color: var(--text-dim); }
+}
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { background: var(--bg); color: var(--text); }
   body {
@@ -60,7 +66,19 @@
   }
 
   .grid { display: grid; grid-template-columns: 360px 1fr; gap: 24px; }
-  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
+@media (max-width: 600px) {
+  .container { padding: 16px 12px; }
+  header { grid-template-columns: 1fr; gap: 16px; padding-bottom: 20px; margin-bottom: 24px; }
+  .header-right { text-align: left; }
+  .panel { padding: 16px; }
+  h1 { font-size: 44px !important; }
+  .subtitle { font-size: 13px; }
+  .edu-title { font-size: 22px; }
+  .stat-value { font-size: 18px; }
+  .viz-area { aspect-ratio: 1; min-height: 360px; }
+  .viz-timer { font-size: 11px; min-width: 80px; padding: 3px 8px; }
+}
 
   .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 24px; }
   .panel-title {
@@ -898,6 +916,7 @@ $('yieldSlider').addEventListener('input', (e) => {
 $('detonate').addEventListener('click', detonate);
 $('reset').addEventListener('click', reset);
 window.addEventListener('resize', resizeCanvas);
+window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 100));
 
 // Init
 renderPresets();
