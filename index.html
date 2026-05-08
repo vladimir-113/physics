@@ -2,928 +2,309 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#0a0a0f">
-<title>Симулятор ядерного взрыва — учебный проект по физике</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#07070b">
+<title>NUKEMAP · Симулятор ядерного взрыва</title>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Unbounded:wght@300;500;700;900&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #0a0a0f; --bg-soft: #14141c; --surface: #1a1a25;
-    --surface-2: #22222f; --line: #2a2a38;
-    --text: #e8e8ed; --text-dim: #8a8a98; --text-faint: #555568;
-    --accent: #ff5722; --accent-2: #ffb800; --accent-3: #ff2d2d;
-    --info: #00d9ff;
-  }
-  @media (hover: none) {
-  .preset:hover { border-color: var(--line); background: var(--bg-soft); }
-  .detonate-btn:hover:not(:disabled) { transform: none; }
-  .reset-btn:hover { border-color: var(--line); color: var(--text-dim); }
-}
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { background: var(--bg); color: var(--text); }
-  body {
-    font-family: 'JetBrains Mono', monospace; font-size: 14px;
-    line-height: 1.6; min-height: 100vh; overflow-x: hidden;
-    background-image:
-      radial-gradient(ellipse at top right, rgba(255, 87, 34, 0.08), transparent 50%),
-      radial-gradient(ellipse at bottom left, rgba(0, 217, 255, 0.04), transparent 50%);
-  }
-  .grain {
-    position: fixed; inset: 0; pointer-events: none;
-    opacity: 0.03; z-index: 1;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  }
-  .container { max-width: 1400px; margin: 0 auto; padding: 32px 24px; position: relative; z-index: 2; }
 
-  header {
-    border-bottom: 1px solid var(--line); padding-bottom: 32px;
-    margin-bottom: 40px; display: grid;
-    grid-template-columns: 1fr auto; gap: 24px; align-items: end;
-  }
-  .header-left .tag {
-    display: inline-block; font-size: 11px; color: var(--accent);
-    letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 16px;
-    border: 1px solid var(--accent); padding: 4px 10px; border-radius: 2px;
-  }
-  h1 {
-    font-family: 'Unbounded', sans-serif; font-weight: 900;
-    font-size: clamp(36px, 6vw, 72px); line-height: 0.95;
-    letter-spacing: -0.03em; text-transform: uppercase; margin-bottom: 16px;
-  }
-  h1 .gradient {
-    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  .subtitle { color: var(--text-dim); font-size: 15px; max-width: 600px; }
-  .header-right { text-align: right; font-size: 11px; color: var(--text-faint); letter-spacing: 0.1em; }
-  .header-right .pill {
-    display: inline-block; padding: 6px 12px; background: var(--surface);
-    border: 1px solid var(--line); border-radius: 100px;
-    margin-bottom: 8px; color: var(--info);
-  }
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+  crossorigin=""/>
 
-  .grid { display: grid; grid-template-columns: 360px 1fr; gap: 24px; }
-  @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
-@media (max-width: 600px) {
-  .container { padding: 16px 12px; }
-  header { grid-template-columns: 1fr; gap: 16px; padding-bottom: 20px; margin-bottom: 24px; }
-  .header-right { text-align: left; }
-  .panel { padding: 16px; }
-  h1 { font-size: 44px !important; }
-  .subtitle { font-size: 13px; }
-  .edu-title { font-size: 22px; }
-  .stat-value { font-size: 18px; }
-  .viz-area { aspect-ratio: 1; min-height: 360px; }
-  .viz-timer { font-size: 11px; min-width: 80px; padding: 3px 8px; }
-}
-
-  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 24px; }
-  .panel-title {
-    font-size: 11px; text-transform: uppercase; letter-spacing: 0.2em;
-    color: var(--text-faint); margin-bottom: 20px;
-    display: flex; justify-content: space-between; align-items: center;
-  }
-  .panel-title::before {
-    content: ''; display: inline-block; width: 6px; height: 6px;
-    background: var(--accent); margin-right: 10px; border-radius: 50%;
-    box-shadow: 0 0 10px var(--accent);
-  }
-
-  .presets { display: grid; gap: 8px; margin-bottom: 24px; }
-  .preset {
-    background: var(--bg-soft); border: 1px solid var(--line);
-    color: var(--text); padding: 12px 14px; border-radius: 3px;
-    cursor: pointer; font-family: 'JetBrains Mono', monospace;
-    font-size: 12px; text-align: left; transition: all 0.2s;
-    display: grid; grid-template-columns: 1fr auto; gap: 4px; align-items: center;
-  }
-  .preset:hover { border-color: var(--accent); background: var(--surface-2); }
-  .preset.active { border-color: var(--accent); background: rgba(255, 87, 34, 0.08); }
-  .preset-name { font-weight: 500; color: var(--text); }
-  .preset-yield { color: var(--accent-2); font-size: 11px; font-weight: 700; }
-  .preset-meta { grid-column: 1 / -1; color: var(--text-faint); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; }
-
-  .control-group { margin-bottom: 20px; }
-  .control-label { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
-  .control-label .name { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.1em; }
-  .control-label .value { font-family: 'Unbounded', sans-serif; font-weight: 700; color: var(--accent-2); font-size: 18px; }
-  input[type="range"] { width: 100%; -webkit-appearance: none; appearance: none; background: transparent; height: 24px; }
-  input[type="range"]::-webkit-slider-runnable-track { height: 4px; background: var(--line); border-radius: 2px; }
-  input[type="range"]::-moz-range-track { height: 4px; background: var(--line); border-radius: 2px; }
-  input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none; appearance: none; width: 18px; height: 18px;
-    background: var(--accent); border-radius: 50%; margin-top: -7px;
-    cursor: pointer; box-shadow: 0 0 12px rgba(255, 87, 34, 0.6);
-    transition: transform 0.15s;
-  }
-  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
-  input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; background: var(--accent); border: none; border-radius: 50%; cursor: pointer; }
-
-  .detonate-btn {
-    width: 100%; background: linear-gradient(135deg, var(--accent-3), var(--accent));
-    color: white; border: none; padding: 16px;
-    font-family: 'Unbounded', sans-serif; font-weight: 700;
-    font-size: 14px; letter-spacing: 0.2em; text-transform: uppercase;
-    border-radius: 3px; cursor: pointer; transition: all 0.2s;
-    box-shadow: 0 0 20px rgba(255, 45, 45, 0.3);
-  }
-  .detonate-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 0 30px rgba(255, 45, 45, 0.6); }
-  .detonate-btn:active:not(:disabled) { transform: translateY(0); }
-  .detonate-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-  .reset-btn {
-    width: 100%; background: transparent; color: var(--text-dim);
-    border: 1px solid var(--line); padding: 12px;
-    font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
-    border-radius: 3px; cursor: pointer; margin-top: 10px; transition: all 0.2s;
-  }
-  .reset-btn:hover { border-color: var(--text-dim); color: var(--text); }
-
-  .viz-area {
-    position: relative;
-    background: linear-gradient(to bottom, #050510 0%, #0a0a1a 60%, #1a0808 80%, #2a0808 100%);
-    border: 1px solid var(--line); border-radius: 4px;
-    aspect-ratio: 1.3; overflow: hidden; min-height: 500px;
-  }
-  .viz-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-  .viz-info {
-    position: absolute; top: 16px; left: 16px;
-    font-size: 10px; color: var(--text-faint);
-    letter-spacing: 0.15em; text-transform: uppercase; z-index: 5;
-  }
-  .viz-info .live {
-    display: inline-block; width: 6px; height: 6px;
-    background: var(--accent); border-radius: 50%; margin-right: 6px;
-    animation: pulse 1.5s infinite; vertical-align: middle;
-  }
-  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-  .viz-coords { position: absolute; bottom: 16px; right: 16px; font-size: 10px; color: var(--text-faint); letter-spacing: 0.15em; text-transform: uppercase; z-index: 5; }
-  .viz-timer {
-    position: absolute; top: 16px; right: 16px;
-    font-family: 'Unbounded', sans-serif; font-weight: 700;
-    font-size: 14px; color: var(--accent-2);
-    letter-spacing: 0.15em; z-index: 5;
-    background: rgba(0,0,0,0.5); padding: 4px 10px;
-    border-radius: 2px; min-width: 100px; text-align: center;
-  }
-
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-top: 24px; }
-  .stat {
-    background: var(--surface); border: 1px solid var(--line);
-    border-left: 2px solid var(--accent); padding: 14px 16px; border-radius: 3px;
-  }
-  .stat-label { font-size: 10px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 6px; }
-  .stat-value { font-family: 'Unbounded', sans-serif; font-weight: 700; font-size: 22px; color: var(--text); }
-  .stat-value.danger { color: var(--accent-3); }
-  .stat-value.warn { color: var(--accent-2); }
-  .stat-unit { font-size: 11px; color: var(--text-faint); margin-left: 4px; font-weight: 400; }
-
-  .effects { margin-top: 24px; }
-  .effect-row {
-    display: grid; grid-template-columns: 16px 1fr auto;
-    gap: 12px; padding: 14px 0;
-    border-bottom: 1px solid var(--line); align-items: center;
-  }
-  .effect-row:last-child { border-bottom: none; }
-  .effect-color { width: 12px; height: 12px; border-radius: 2px; }
-  .effect-info { display: flex; flex-direction: column; gap: 2px; }
-  .effect-name { font-size: 13px; color: var(--text); font-weight: 500; }
-  .effect-desc { font-size: 11px; color: var(--text-dim); line-height: 1.4; }
-  .effect-radius { font-family: 'Unbounded', sans-serif; font-weight: 700; color: var(--accent-2); font-size: 14px; text-align: right; white-space: nowrap; }
-
-  .education { margin-top: 48px; padding-top: 40px; border-top: 1px solid var(--line); }
-  .edu-title { font-family: 'Unbounded', sans-serif; font-size: 32px; font-weight: 700; margin-bottom: 24px; letter-spacing: -0.02em; }
-  .edu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-  .edu-card { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 24px; }
-  .edu-card h3 { font-family: 'Unbounded', sans-serif; font-weight: 500; font-size: 16px; margin-bottom: 12px; color: var(--accent-2); }
-  .edu-card p { font-size: 13px; line-height: 1.6; color: var(--text-dim); }
-  .edu-card .formula { background: var(--bg); padding: 8px 12px; border-radius: 2px; color: var(--accent); margin: 12px 0; font-size: 13px; border-left: 2px solid var(--accent); }
-
-  footer { margin-top: 64px; padding-top: 32px; border-top: 1px solid var(--line); text-align: center; color: var(--text-faint); font-size: 11px; letter-spacing: 0.1em; }
-</style>
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+
 <div class="grain"></div>
+<div class="scanlines"></div>
 
-<div class="container">
+<div class="app">
 
-  <header>
-    <div class="header-left">
-      <span class="tag">▲ Учебный симулятор · Физика 9 класс</span>
-      <h1>Ядерный<br><span class="gradient">взрыв</span></h1>
-      <p class="subtitle">Интерактивная визуализация физических последствий ядерного взрыва. Образовательный проект для понимания масштабов энергии деления и термоядерного синтеза.</p>
+  <!-- ШАПКА -->
+  <header class="topbar">
+    <div class="topbar__brand">
+      <div class="topbar__logo">N</div>
+      <div>
+        <div class="topbar__title">Nuke<span>map</span> · Sim</div>
+        <div class="topbar__subtitle">Учебный проект · Физика</div>
+      </div>
     </div>
-    <div class="header-right">
-      <div class="pill">SYSTEM ONLINE</div>
-      <div>v2.0 · ОБРАЗОВАТЕЛЬНЫЙ ПРОЕКТ</div>
+
+    <div class="topbar__status">
+      <span class="status-pill"><span class="status-pill__dot"></span>System Online</span>
+      <span class="status-pill"><span class="status-pill__dot"></span>Map Linked</span>
+    </div>
+
+    <div class="topbar__meta">
+      <div class="topbar__time">DEFCON · 5</div>
+      <div>v3.0 · OPEN SOURCE</div>
     </div>
   </header>
 
-  <div class="grid">
+  <!-- ВКЛАДКИ -->
+  <nav class="tabs">
+    <button class="tab-btn tab-btn--active" data-tab="config">
+      <span class="tab-btn__num">01</span>
+      <span>Боеприпас</span>
+    </button>
+    <button class="tab-btn" data-tab="map">
+      <span class="tab-btn__num">02</span>
+      <span>Карта · Цель</span>
+    </button>
+    <button class="tab-btn" data-tab="sim">
+      <span class="tab-btn__num">03</span>
+      <span>Симуляция</span>
+    </button>
+    <button class="tab-btn" data-tab="info">
+      <span class="tab-btn__num">04</span>
+      <span>Физика</span>
+    </button>
+  </nav>
 
-    <aside>
-      <div class="panel">
-        <div class="panel-title">Боеприпас</div>
-        <div class="presets" id="presets"></div>
+  <!-- ОСНОВНОЕ -->
+  <main class="main">
+    <div class="tab-panels">
 
-        <div class="control-group">
-          <div class="control-label">
-            <span class="name">Мощность</span>
-            <span class="value" id="yieldOut">15 кт</span>
+      <!-- ВКЛАДКА 1: КОНФИГУРАТОР БОМБЫ -->
+      <section class="tab-panel tab-panel--active" data-tab="config">
+        <div class="config-grid">
+
+          <!-- Левая колонка: пресеты + материал + схема -->
+          <div class="config-col">
+
+            <div>
+              <div class="section-title">Готовые конфигурации <span class="section-title__id">/ presets</span></div>
+              <div id="presetList"></div>
+            </div>
+
+            <div>
+              <div class="section-title">Делящийся материал <span class="section-title__id">/ material</span></div>
+              <div id="materialList"></div>
+            </div>
+
+            <div>
+              <div class="section-title">Схема подрыва <span class="section-title__id">/ assembly</span></div>
+              <div id="assemblyList"></div>
+            </div>
+
           </div>
-          <input type="range" id="yieldSlider" min="0" max="100" value="22" step="1"/>
-          <div style="font-size: 10px; color: var(--text-faint); margin-top: 4px; display: flex; justify-content: space-between;">
-            <span>0.1 кт</span><span>100 Мт</span>
+
+          <!-- Правая колонка: масса + сценарий + расчёт + кнопка -->
+          <div class="config-col">
+
+            <div>
+              <div class="section-title">Масса заряда <span class="section-title__id">/ mass</span></div>
+              <div class="mass-control">
+                <div class="mass-row">
+                  <span class="mass-label">Масса материала</span>
+                  <span class="mass-value" id="massValue">6.2 кг</span>
+                </div>
+                <input type="range" id="massSlider" min="0.1" max="80" step="0.1" value="6.2">
+                <div class="mass-crit" id="critMassRef">Крит. масса: 10 кг</div>
+              </div>
+            </div>
+
+            <div>
+              <div class="section-title">Сценарий доставки <span class="section-title__id">/ delivery</span></div>
+              <div id="scenarioList"></div>
+            </div>
+
+            <div>
+              <div class="section-title">Расчётная мощность <span class="section-title__id">/ output</span></div>
+              <div class="calc-grid">
+                <div class="calc-cell">
+                  <div class="calc-cell__label">Энерговыделение</div>
+                  <div class="calc-cell__value" id="calcYield">21 кт</div>
+                </div>
+                <div class="calc-cell">
+                  <div class="calc-cell__label">КПД</div>
+                  <div class="calc-cell__value" id="calcEfficiency">17%</div>
+                </div>
+                <div class="calc-cell">
+                  <div class="calc-cell__label">Прореагировало ядер</div>
+                  <div class="calc-cell__value" id="calcAtoms">2.6e+24</div>
+                </div>
+                <div class="calc-cell">
+                  <div class="calc-cell__label">Высота подрыва</div>
+                  <div class="calc-cell__value" id="calcHeight">580 м</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="warnings" id="warnings"></div>
+
+            <div>
+              <button class="detonate-btn" id="detonateBtn">⚠ Подорвать</button>
+              <div style="margin-top: 8px;">
+                <button class="reset-btn" id="resetBtn">Сбросить состояние</button>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ВКЛАДКА 2: КАРТА -->
+      <section class="tab-panel" data-tab="map">
+        <div class="map-layout">
+          <aside class="map-sidebar">
+
+            <div class="map-sidebar__target">
+              <div class="target-row">
+                <span class="target-label">Цель</span>
+              </div>
+              <div class="target-name" id="targetName">Москва</div>
+              <div class="target-coords" id="targetCoords">55.7558°, 37.6173°</div>
+            </div>
+
+            <div class="map-actions">
+              <button class="map-action-btn" id="addObsBtn">+ Точка</button>
+              <button class="map-action-btn" id="clearObsBtn">Очистить</button>
+            </div>
+
+            <div class="section-title" style="margin-top: 16px;">Точки наблюдения</div>
+            <div class="obs-list" id="obsList">
+              <div class="empty-hint">Кликните «+ Точка», затем по карте.</div>
+            </div>
+
+            <div class="section-title" style="margin-top: 24px;">Города мира</div>
+            <div id="cityList"></div>
+
+          </aside>
+
+          <div class="map-container">
+            <div id="map"></div>
           </div>
         </div>
+      </section>
 
-        <button class="detonate-btn" id="detonate">⚠ Подорвать</button>
-        <button class="reset-btn" id="reset">Сбросить</button>
-      </div>
+      <!-- ВКЛАДКА 3: СИМУЛЯЦИЯ -->
+      <section class="tab-panel" data-tab="sim">
+        <div class="sim-layout">
 
-      <div class="panel" style="margin-top: 16px;">
-        <div class="panel-title">Состав заряда</div>
-        <div id="composition" style="font-size: 12px; line-height: 1.8;"></div>
-      </div>
-    </aside>
+          <div class="viz-area">
+            <div class="viz-info"><span class="viz-info__live"></span>Моделирование</div>
+            <div class="viz-timer" id="vizTimer">T+ 0.00 С</div>
+            <div class="viz-coords" id="vizCoords">Свободная камера</div>
+            <canvas id="canvas"></canvas>
+          </div>
 
-    <main>
-      <div class="viz-area" id="vizArea">
-        <div class="viz-info"><span class="live"></span>МОДЕЛИРОВАНИЕ ВОЗДЕЙСТВИЯ</div>
-        <div class="viz-timer" id="vizTimer">T+ 0.00 С</div>
-        <div class="viz-coords" id="vizCoords">МАСШТАБ: — КМ</div>
-        <canvas class="viz-canvas" id="canvas"></canvas>
-      </div>
+          <aside class="sim-sidebar">
+            <div class="section-title">Параметры взрыва</div>
+            <div class="stats-grid">
+              <div class="stat-cell stat-cell--warn">
+                <div class="stat-cell__label">Энергия</div>
+                <div class="stat-cell__value" id="statEnergy">88 ТДж</div>
+              </div>
+              <div class="stat-cell">
+                <div class="stat-cell__label">Эквивалент Хиросимы</div>
+                <div class="stat-cell__value" id="statHiroshima">1.4×</div>
+              </div>
+              <div class="stat-cell stat-cell--danger">
+                <div class="stat-cell__label">Площадь поражения</div>
+                <div class="stat-cell__value" id="statArea">15 км²</div>
+              </div>
+              <div class="stat-cell stat-cell--danger">
+                <div class="stat-cell__label">Погибших</div>
+                <div class="stat-cell__value" id="statDead">—</div>
+              </div>
+              <div class="stat-cell stat-cell--warn">
+                <div class="stat-cell__label">Раненых</div>
+                <div class="stat-cell__value" id="statWounded">—</div>
+              </div>
+              <div class="stat-cell">
+                <div class="stat-cell__label">Огненный шар</div>
+                <div class="stat-cell__value" id="statFireball">—</div>
+              </div>
+            </div>
 
-      <div class="stats">
-        <div class="stat">
-          <div class="stat-label">Энергия взрыва</div>
-          <div><span class="stat-value warn" id="energyOut">63</span><span class="stat-unit">ТДж</span></div>
+            <div class="section-title" style="margin-top: 20px;">Зоны поражения</div>
+            <div class="zone-list" id="zoneList"></div>
+
+            <div style="margin-top: 20px;">
+              <button class="detonate-btn" id="detonateBtn2">⚠ Подорвать</button>
+            </div>
+          </aside>
+
         </div>
-        <div class="stat">
-          <div class="stat-label">Эквивалент Хиросимы</div>
-          <div><span class="stat-value" id="hiroOut">1.0</span><span class="stat-unit">×</span></div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Площадь поражения</div>
-          <div><span class="stat-value danger" id="areaOut">12</span><span class="stat-unit">км²</span></div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Огненный шар</div>
-          <div><span class="stat-value warn" id="fireballOut">180</span><span class="stat-unit" id="fireballUnit">м</span></div>
-        </div>
-      </div>
+      </section>
 
-      <div class="panel effects" style="margin-top: 24px;">
-        <div class="panel-title">Зоны поражения</div>
-        <div id="effectsList"></div>
-      </div>
-    </main>
+      <!-- ВКЛАДКА 4: ОБРАЗОВАТЕЛЬНАЯ -->
+      <section class="tab-panel" data-tab="info">
+        <div class="config-col" style="max-width: 900px; margin: 0 auto;">
+          <div>
+            <div class="section-title">Откуда берётся энергия <span class="section-title__id">/ E = mc²</span></div>
+            <div class="mat-card" style="grid-template-columns: 1fr;">
+              <div class="mat-card__info">
+                <p>При делении ядра тяжёлого элемента (уран-235, плутоний-239) часть массы превращается в энергию:</p>
+                <p style="margin-top: 12px; padding: 8px 12px; background: var(--bg-soft); border-left: 2px solid var(--amber); color: var(--amber); font-family: 'Unbounded', sans-serif; font-size: 16px;">E = Δm · c²</p>
+                <p style="margin-top: 12px; color: var(--text-dim);">Каждое деление выделяет около <b style="color:var(--amber)">200 МэВ</b>. В одном килограмме U-235 содержится ~2.6·10²⁴ атомов — если все прореагируют, получится около 80 ТДж, что эквивалентно 20 кт тротила.</p>
+              </div>
+            </div>
+          </div>
 
-  </div>
+          <div>
+            <div class="section-title">Цепная реакция <span class="section-title__id">/ k > 1</span></div>
+            <div class="mat-card" style="grid-template-columns: 1fr;">
+              <div class="mat-card__info">
+                <p>При делении ядро испускает 2-3 нейтрона. Каждый из них может расщепить ещё одно ядро. Получается лавина:</p>
+                <p style="margin-top: 12px; padding: 8px 12px; background: var(--bg-soft); border-left: 2px solid var(--amber); color: var(--amber); font-family: 'JetBrains Mono', monospace; font-size: 14px;">1 → 3 → 9 → 27 → 81 → ...</p>
+                <p style="margin-top: 12px; color: var(--text-dim);">Чтобы реакция пошла лавинообразно, масса материала должна превышать <b style="color:var(--amber)">критическую</b>: ~52 кг для голой сферы U-235 или ~10 кг для Pu-239.</p>
+              </div>
+            </div>
+          </div>
 
-  <section class="education">
-    <h2 class="edu-title">Физика взрыва</h2>
-    <div class="edu-grid">
-      <div class="edu-card">
-        <h3>Откуда энергия</h3>
-        <p>При делении ядра урана-235 или плутония-239 часть массы превращается в энергию по уравнению Эйнштейна:</p>
-        <div class="formula">E = Δm·c²</div>
-        <p>Одно деление ≈ 200 МэВ. В 1 кг урана делится ~10²⁴ ядер, давая энергию около 80 ТДж — эквивалент 20 кт тротила.</p>
-      </div>
-      <div class="edu-card">
-        <h3>Цепная реакция</h3>
-        <p>Каждое деление ядра выпускает 2-3 нейтрона, которые делят соседние ядра. Получается лавина: 1 → 3 → 9 → 27 → ...</p>
-        <div class="formula">k > 1 ⟹ взрыв</div>
-        <p>В бомбе масса делящегося материала превышает критическую — около 50 кг для U-235 или 10 кг для Pu-239.</p>
-      </div>
-      <div class="edu-card">
-        <h3>Термоядерный синтез</h3>
-        <p>В водородной бомбе работает другая реакция — слияние изотопов водорода в гелий:</p>
-        <div class="formula">²H + ³H → ⁴He + n</div>
-        <p>Эта реакция даёт ещё больше энергии на нуклон. Именно так светит Солнце.</p>
-      </div>
-      <div class="edu-card">
-        <h3>Тротиловый эквивалент</h3>
-        <p>Мощность ядерного оружия принято измерять в массе обычной взрывчатки, дающей такую же энергию.</p>
-        <div class="formula">1 кт = 4.184 ТДж</div>
-        <p>Хиросима — 15 кт. Царь-бомба — 50 000 кт. Современная боеголовка — 100-500 кт.</p>
-      </div>
+          <div>
+            <div class="section-title">Термоядерный синтез <span class="section-title__id">/ fusion</span></div>
+            <div class="mat-card" style="grid-template-columns: 1fr;">
+              <div class="mat-card__info">
+                <p>В водородной бомбе работает другая реакция — слияние изотопов водорода в гелий:</p>
+                <p style="margin-top: 12px; padding: 8px 12px; background: var(--bg-soft); border-left: 2px solid var(--amber); color: var(--amber); font-family: 'Unbounded', sans-serif; font-size: 16px;">²H + ³H → ⁴He + n + 17.6 МэВ</p>
+                <p style="margin-top: 12px; color: var(--text-dim);">Чтобы поджечь синтез, нужны давления и температуры как в ядре звезды. Их создаёт первичный заряд деления. Так светит Солнце и так работают двухступенчатые термоядерные бомбы — без верхнего предела по мощности.</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="section-title">Тротиловый эквивалент <span class="section-title__id">/ scaling</span></div>
+            <div class="mat-card" style="grid-template-columns: 1fr;">
+              <div class="mat-card__info">
+                <p>Мощность ядерного оружия принято измерять в массе обычной взрывчатки, дающей такую же энергию.</p>
+                <p style="margin-top: 12px; padding: 8px 12px; background: var(--bg-soft); border-left: 2px solid var(--amber); color: var(--amber); font-family: 'Unbounded', sans-serif; font-size: 16px;">1 кт ТНТ = 4.184 ТДж</p>
+                <p style="margin-top: 12px; color: var(--text-dim);">Радиусы поражения растут как кубический корень от мощности (R ∝ Y^⅓). Удвоение мощности увеличивает радиус всего на 26%, а площадь — на 60%.</p>
+              </div>
+            </div>
+          </div>
+
+          <div style="text-align: center; padding: 32px 0; color: var(--text-faint); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; border-top: 1px solid var(--line);">
+            Учебный проект · Все формулы и расчёты — упрощённые модели для образования
+          </div>
+        </div>
+      </section>
+
     </div>
-  </section>
-
-  <footer>
-    <p>Учебный проект для урока физики · 9 класс · Тема: ядерные реакции</p>
-    <p style="margin-top: 8px;">Все формулы и расчёты — упрощённые модели для образовательных целей</p>
-  </footer>
+  </main>
 
 </div>
 
-<script>
-const PRESETS = [
-  { id: 'davy', name: 'Davy Crockett', yieldKt: 0.02, meta: 'Тактическое · США 1961',
-    composition: { type: 'Деление', material: 'Pu-239', mass: '~3 кг' } },
-  { id: 'hiroshima', name: 'Малыш (Хиросима)', yieldKt: 15, meta: 'Урановая · США 1945',
-    composition: { type: 'Деление', material: 'U-235 (80%)', mass: '64 кг' } },
-  { id: 'nagasaki', name: 'Толстяк (Нагасаки)', yieldKt: 21, meta: 'Плутониевая · США 1945',
-    composition: { type: 'Деление (имплозия)', material: 'Pu-239', mass: '6.2 кг' } },
-  { id: 'modern', name: 'W88 (совр. боеголовка)', yieldKt: 475, meta: 'Термоядерная · США',
-    composition: { type: 'Деление + синтез', material: 'Pu-239 + ⁶LiD', mass: '~360 кг' } },
-  { id: 'tsar', name: 'Царь-бомба', yieldKt: 50000, meta: 'Термоядерная · СССР 1961',
-    composition: { type: 'Деление-синтез-деление', material: 'Pu + ⁶LiD + U-238', mass: '27 тонн' } },
-];
+<!-- FAB (мобильная плавающая кнопка) -->
+<button class="fab" id="fabDetonate" title="Подорвать">⚠</button>
 
-function sliderToYield(s) {
-  const minLog = Math.log10(0.1), maxLog = Math.log10(100000);
-  return Math.pow(10, minLog + (s / 100) * (maxLog - minLog));
-}
-function yieldToSlider(kt) {
-  const minLog = Math.log10(0.1), maxLog = Math.log10(100000);
-  return ((Math.log10(kt) - minLog) / (maxLog - minLog)) * 100;
-}
-function formatYield(kt) {
-  if (kt < 1) return (kt * 1000).toFixed(0) + ' т';
-  if (kt < 1000) return kt.toFixed(kt < 10 ? 1 : 0) + ' кт';
-  return (kt / 1000).toFixed(kt < 10000 ? 1 : 0) + ' Мт';
-}
-function formatRadius(km) {
-  if (km < 1) return (km * 1000).toFixed(0) + ' м';
-  return km.toFixed(km < 10 ? 2 : 1) + ' км';
-}
+<!-- Подсказка -->
+<div class="hint-bar" id="hintBar"></div>
 
-function calcEffects(yieldKt) {
-  const Y13 = Math.pow(yieldKt, 1/3);
-  return {
-    fireball: 0.05 * Y13,
-    severeBlast: 0.27 * Y13,
-    moderateBlast: 0.55 * Y13,
-    lightBlast: 1.10 * Y13,
-    thermal: 1.20 * Y13,
-    radiation: 0.40 * Y13,
-  };
-}
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+  crossorigin=""></script>
 
-const ZONES = [
-  { key: 'fireball',    name: 'Огненный шар',    color: '#ff2d2d', desc: 'Температура свыше миллиона °C. Всё испаряется.' },
-  { key: 'severeBlast', name: 'Полное разрушение', color: '#ff5722', desc: 'Бетонные здания обрушены.' },
-  { key: 'radiation',   name: 'Смертельная радиация', color: '#ffb800', desc: 'Острая лучевая болезнь. >500 рад.' },
-  { key: 'moderateBlast', name: 'Серьёзные разрушения', color: '#ffd54f', desc: 'Кирпичные дома повреждены.' },
-  { key: 'thermal',     name: 'Тепловые ожоги',  color: '#ff7e36', desc: 'Ожоги 3-й степени, пожары.' },
-  { key: 'lightBlast',  name: 'Лёгкие разрушения', color: '#90a4ae', desc: 'Выбиты стёкла, ранения от осколков.' },
-];
+<!-- Главный модуль (ES6) -->
+<script type="module" src="js/main.js"></script>
 
-let state = {
-  yieldKt: 15,
-  detonating: false,
-  startTime: 0,
-  particles: [],
-  debris: [],
-  smokeRings: [],
-  shake: 0,
-};
-
-const $ = id => document.getElementById(id);
-const canvas = $('canvas');
-const ctx = canvas.getContext('2d');
-
-function resizeCanvas() {
-  const rect = canvas.parentElement.getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = rect.width * dpr;
-  canvas.height = rect.height * dpr;
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-}
-
-function renderPresets() {
-  const cont = $('presets');
-  cont.innerHTML = '';
-  PRESETS.forEach(p => {
-    const btn = document.createElement('button');
-    btn.className = 'preset';
-    btn.dataset.id = p.id;
-    btn.innerHTML = `
-      <span class="preset-name">${p.name}</span>
-      <span class="preset-yield">${formatYield(p.yieldKt)}</span>
-      <span class="preset-meta">${p.meta}</span>
-    `;
-    btn.addEventListener('click', () => {
-      state.yieldKt = p.yieldKt;
-      $('yieldSlider').value = yieldToSlider(p.yieldKt);
-      updateAll(p.id);
-    });
-    cont.appendChild(btn);
-  });
-}
-
-function setActivePreset(id) {
-  document.querySelectorAll('.preset').forEach(el => {
-    el.classList.toggle('active', el.dataset.id === id);
-  });
-  if (id) {
-    const p = PRESETS.find(x => x.id === id);
-    $('composition').innerHTML = `
-      <div style="display: flex; justify-content: space-between; padding: 4px 0;"><span style="color:var(--text-dim)">Тип</span><span>${p.composition.type}</span></div>
-      <div style="display: flex; justify-content: space-between; padding: 4px 0;"><span style="color:var(--text-dim)">Материал</span><span style="color:var(--accent-2)">${p.composition.material}</span></div>
-      <div style="display: flex; justify-content: space-between; padding: 4px 0;"><span style="color:var(--text-dim)">Масса</span><span>${p.composition.mass}</span></div>
-    `;
-  } else {
-    $('composition').innerHTML = `<div style="color:var(--text-dim); font-style: italic;">Произвольная мощность</div>`;
-  }
-}
-
-function updateAll(presetId) {
-  setActivePreset(presetId || null);
-  const eff = calcEffects(state.yieldKt);
-
-  $('yieldOut').textContent = formatYield(state.yieldKt);
-
-  const energyTJ = state.yieldKt * 4.184;
-  if (energyTJ < 1) $('energyOut').textContent = (energyTJ * 1000).toFixed(0);
-  else if (energyTJ < 1000) $('energyOut').textContent = energyTJ.toFixed(0);
-  else $('energyOut').textContent = (energyTJ / 1000).toFixed(1) + 'k';
-
-  const hiro = state.yieldKt / 15;
-  $('hiroOut').textContent = hiro < 1 ? hiro.toFixed(2) : hiro < 100 ? hiro.toFixed(1) : Math.round(hiro);
-
-  const maxR = Math.max(eff.lightBlast, eff.thermal);
-  const area = Math.PI * maxR * maxR;
-  $('areaOut').textContent = area < 1 ? area.toFixed(2) : area < 100 ? area.toFixed(1) : Math.round(area);
-
-  const fb = eff.fireball;
-  $('fireballOut').textContent = fb < 1 ? Math.round(fb * 1000) : fb.toFixed(2);
-  $('fireballUnit').textContent = fb < 1 ? 'м' : 'км';
-
-  renderEffects(eff);
-
-  const scaleKm = Math.max(eff.lightBlast, eff.thermal) * 2.5;
-  $('vizCoords').textContent = 'МАСШТАБ: ' + (scaleKm < 1 ? Math.round(scaleKm * 1000) + ' М' : scaleKm.toFixed(1) + ' КМ');
-}
-
-function renderEffects(eff) {
-  const list = $('effectsList');
-  list.innerHTML = '';
-  ZONES.forEach(z => {
-    const r = eff[z.key];
-    const row = document.createElement('div');
-    row.className = 'effect-row';
-    row.innerHTML = `
-      <div class="effect-color" style="background:${z.color}; box-shadow: 0 0 8px ${z.color}"></div>
-      <div class="effect-info">
-        <div class="effect-name">${z.name}</div>
-        <div class="effect-desc">${z.desc}</div>
-      </div>
-      <div class="effect-radius">${formatRadius(r)}</div>
-    `;
-    list.appendChild(row);
-  });
-}
-
-function detonate() {
-  if (state.detonating) return;
-  state.detonating = true;
-  state.startTime = performance.now();
-  state.particles = [];
-  state.debris = [];
-  state.smokeRings = [];
-  state.shake = 1;
-  $('detonate').disabled = true;
-
-  // Initial particle burst
-  for (let i = 0; i < 120; i++) {
-    const angle = Math.random() * Math.PI * 2;
-    const speed = 80 + Math.random() * 320;
-    state.particles.push({
-      x: 0, y: 0,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed * 0.7 - 40,
-      size: 1.5 + Math.random() * 3,
-      life: 0,
-      maxLife: 1500 + Math.random() * 2500,
-      hue: 15 + Math.random() * 40,
-      brightness: 60 + Math.random() * 30,
-    });
-  }
-
-  // Debris (slower, falling pieces)
-  for (let i = 0; i < 40; i++) {
-    const angle = Math.random() * Math.PI - Math.PI; // upper half
-    const speed = 50 + Math.random() * 200;
-    state.debris.push({
-      x: 0, y: 0,
-      vx: Math.cos(angle) * speed * 0.6,
-      vy: Math.sin(angle) * speed - 100,
-      size: 1 + Math.random() * 2,
-      rot: Math.random() * Math.PI * 2,
-      vrot: (Math.random() - 0.5) * 5,
-      life: 0,
-      maxLife: 4000,
-    });
-  }
-
-  setTimeout(() => { $('detonate').disabled = false; }, 5000);
-}
-
-function reset() {
-  state.detonating = false;
-  state.particles = [];
-  state.debris = [];
-  state.smokeRings = [];
-  state.shake = 0;
-  $('detonate').disabled = false;
-  $('vizTimer').textContent = 'T+ 0.00 С';
-  $('yieldSlider').value = yieldToSlider(15);
-  state.yieldKt = 15;
-  updateAll('hiroshima');
-}
-
-// ─── Drawing ───
-let lastTime = 0;
-function draw(now) {
-  const dt = Math.min(50, now - lastTime);
-  lastTime = now;
-
-  const w = canvas.clientWidth;
-  const h = canvas.clientHeight;
-
-  // Camera shake on detonation
-  let shakeX = 0, shakeY = 0;
-  if (state.shake > 0.01) {
-    shakeX = (Math.random() - 0.5) * state.shake * 12;
-    shakeY = (Math.random() - 0.5) * state.shake * 12;
-    state.shake *= 0.92;
-  }
-
-  ctx.save();
-  ctx.translate(shakeX, shakeY);
-  ctx.clearRect(-20, -20, w + 40, h + 40);
-
-  const groundY = h * 0.78;
-  const cx = w / 2;
-  const cy = groundY;
-
-  // Sky atmosphere
-  const skyGrad = ctx.createLinearGradient(0, 0, 0, groundY);
-  skyGrad.addColorStop(0, '#050510');
-  skyGrad.addColorStop(0.7, '#0a0a1c');
-  skyGrad.addColorStop(1, '#1a0a15');
-  ctx.fillStyle = skyGrad;
-  ctx.fillRect(-20, -20, w + 40, groundY + 20);
-
-  // Faint range circles (always visible)
-  const eff = calcEffects(state.yieldKt);
-  const maxR = Math.max(...Object.values(eff));
-  const scale = (Math.min(w, h) * 0.42) / maxR;
-
-  ctx.save();
-  ctx.strokeStyle = 'rgba(120, 120, 140, 0.12)';
-  ctx.lineWidth = 0.5;
-  ctx.setLineDash([2, 4]);
-  for (let i = 1; i <= 5; i++) {
-    ctx.beginPath();
-    ctx.arc(cx, cy, (Math.min(w, h) * 0.42 * i) / 5, Math.PI, 2 * Math.PI);
-    ctx.stroke();
-  }
-  ctx.restore();
-
-  // Ground
-  const groundGrad = ctx.createLinearGradient(0, groundY, 0, h);
-  groundGrad.addColorStop(0, '#3a1a08');
-  groundGrad.addColorStop(0.5, '#250e04');
-  groundGrad.addColorStop(1, '#100502');
-  ctx.fillStyle = groundGrad;
-  ctx.fillRect(-20, groundY, w + 40, h - groundY + 40);
-
-  // Ground texture lines
-  ctx.strokeStyle = 'rgba(255, 100, 50, 0.08)';
-  ctx.lineWidth = 0.5;
-  for (let i = 0; i < 8; i++) {
-    const y = groundY + 8 + i * 14;
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(w, y);
-    ctx.stroke();
-  }
-
-  // Glowing ground line at horizon
-  ctx.strokeStyle = 'rgba(255, 100, 30, 0.4)';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(0, groundY);
-  ctx.lineTo(w, groundY);
-  ctx.stroke();
-
-  if (!state.detonating) {
-    // Idle: preview rings
-    const sorted = [...ZONES].sort((a, b) => eff[b.key] - eff[a.key]);
-    sorted.forEach(z => {
-      const r = eff[z.key] * scale;
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, Math.PI, 2 * Math.PI);
-      ctx.fillStyle = z.color + '12';
-      ctx.fill();
-      ctx.strokeStyle = z.color + '50';
-      ctx.lineWidth = 1;
-      ctx.setLineDash([3, 3]);
-      ctx.stroke();
-      ctx.restore();
-    });
-
-    // Target marker
-    ctx.strokeStyle = 'rgba(255, 220, 100, 0.7)';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.arc(cx, cy, 10, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(cx - 18, cy); ctx.lineTo(cx - 12, cy);
-    ctx.moveTo(cx + 12, cy); ctx.lineTo(cx + 18, cy);
-    ctx.moveTo(cx, cy - 18); ctx.lineTo(cx, cy - 12);
-    ctx.moveTo(cx, cy + 12); ctx.lineTo(cx, cy + 18);
-    ctx.stroke();
-
-    // Pulsing center dot
-    const pulse = 0.5 + 0.5 * Math.sin(now / 400);
-    ctx.fillStyle = `rgba(255, 220, 100, ${pulse})`;
-    ctx.beginPath();
-    ctx.arc(cx, cy, 3, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.restore();
-    requestAnimationFrame(draw);
-    return;
-  }
-
-  // ───── DETONATION ─────
-  const elapsed = (now - state.startTime) / 1000;
-  $('vizTimer').textContent = 'T+ ' + elapsed.toFixed(2) + ' С';
-
-  // Phase 1: White flash
-  if (elapsed < 0.5) {
-    const flashAlpha = Math.max(0, Math.pow(1 - elapsed / 0.5, 2));
-    ctx.fillStyle = `rgba(255, 255, 245, ${flashAlpha})`;
-    ctx.fillRect(-20, -20, w + 40, h + 40);
-  }
-
-  // Phase 2: Fireball
-  const fbProgress = Math.min(1, elapsed / 1.0);
-  const fbR = eff.fireball * scale * easeOutExpo(fbProgress);
-  if (elapsed < 4) {
-    const fbFade = elapsed < 1 ? 1 : Math.max(0, 1 - (elapsed - 1) / 3);
-
-    // Outer glow halo
-    const haloR = fbR * 2.5;
-    const haloGrad = ctx.createRadialGradient(cx, cy, fbR, cx, cy, haloR);
-    haloGrad.addColorStop(0, `rgba(255, 200, 100, ${fbFade * 0.4})`);
-    haloGrad.addColorStop(0.5, `rgba(255, 100, 50, ${fbFade * 0.2})`);
-    haloGrad.addColorStop(1, 'rgba(255, 50, 0, 0)');
-    ctx.fillStyle = haloGrad;
-    ctx.beginPath();
-    ctx.arc(cx, cy, haloR, Math.PI, 2 * Math.PI);
-    ctx.fill();
-
-    // Main fireball
-    const fbGrad = ctx.createRadialGradient(cx, cy - fbR * 0.2, 0, cx, cy, fbR);
-    fbGrad.addColorStop(0, `rgba(255, 255, 230, ${fbFade})`);
-    fbGrad.addColorStop(0.2, `rgba(255, 240, 150, ${fbFade * 0.98})`);
-    fbGrad.addColorStop(0.5, `rgba(255, 160, 60, ${fbFade * 0.9})`);
-    fbGrad.addColorStop(0.8, `rgba(220, 70, 20, ${fbFade * 0.7})`);
-    fbGrad.addColorStop(1, `rgba(120, 30, 0, ${fbFade * 0.3})`);
-    ctx.fillStyle = fbGrad;
-    ctx.beginPath();
-    ctx.arc(cx, cy, fbR, Math.PI, 2 * Math.PI);
-    ctx.fill();
-
-    // Inner ultra-hot core
-    if (elapsed < 2) {
-      const coreFade = Math.max(0, 1 - elapsed / 2);
-      ctx.fillStyle = `rgba(255, 255, 255, ${coreFade * 0.95})`;
-      ctx.beginPath();
-      ctx.arc(cx, cy, fbR * 0.35, Math.PI, 2 * Math.PI);
-      ctx.fill();
-    }
-  }
-
-  // Phase 3: Shockwave rings (zones)
-  const sorted = [...ZONES].sort((a, b) => eff[b.key] - eff[a.key]);
-  sorted.forEach((z, idx) => {
-    const r = eff[z.key] * scale;
-    const delay = 0.15 + idx * 0.06;
-    const dur = 1.4 + r / 200;
-    const t = (elapsed - delay) / dur;
-
-    if (t > 0 && t < 1) {
-      const easeT = easeOutExpo(t);
-      const currentR = r * easeT;
-
-      // Filled translucent zone
-      const fillA = 0.15 + 0.1 * (1 - t);
-      ctx.fillStyle = z.color + Math.floor(fillA * 255).toString(16).padStart(2, '0');
-      ctx.beginPath();
-      ctx.arc(cx, cy, currentR, Math.PI, 2 * Math.PI);
-      ctx.fill();
-
-      // Bright leading edge
-      const edgeA = 0.85 - t * 0.4;
-      ctx.strokeStyle = z.color;
-      ctx.globalAlpha = edgeA;
-      ctx.lineWidth = 3 + (1 - t) * 4;
-      ctx.shadowColor = z.color;
-      ctx.shadowBlur = 15;
-      ctx.beginPath();
-      ctx.arc(cx, cy, currentR, Math.PI, 2 * Math.PI);
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-      ctx.globalAlpha = 1;
-    } else if (t >= 1) {
-      // Settled zone
-      ctx.fillStyle = z.color + '38';
-      ctx.strokeStyle = z.color + 'a0';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, Math.PI, 2 * Math.PI);
-      ctx.fill();
-      ctx.stroke();
-    }
-  });
-
-  // Phase 4: Mushroom cloud
-  if (elapsed > 0.6) {
-    drawMushroomCloud(cx, cy, eff.fireball * scale, Math.min(1, (elapsed - 0.6) / 4), elapsed);
-  }
-
-  // Particles
-  updateAndDrawParticles(cx, cy, dt);
-
-  // Debris
-  updateAndDrawDebris(cx, cy, dt);
-
-  ctx.restore();
-  requestAnimationFrame(draw);
-}
-
-function drawMushroomCloud(cx, cy, fbR, progress, elapsed) {
-  const eased = easeOutQuad(progress);
-
-  // Stem
-  const stemHeight = fbR * 4.5 * eased;
-  const stemTopY = cy - stemHeight;
-
-  ctx.save();
-
-  // Stem with wobble
-  ctx.beginPath();
-  const stemBaseW = fbR * 0.7;
-  const stemTopW = fbR * 0.5;
-  const wobble = Math.sin(elapsed * 1.2) * fbR * 0.05;
-
-  ctx.moveTo(cx - stemBaseW, cy);
-  ctx.bezierCurveTo(
-    cx - stemBaseW * 0.8 + wobble, cy - stemHeight * 0.4,
-    cx - stemTopW * 1.2 - wobble, cy - stemHeight * 0.7,
-    cx - stemTopW, stemTopY
-  );
-  ctx.lineTo(cx + stemTopW, stemTopY);
-  ctx.bezierCurveTo(
-    cx + stemTopW * 1.2 + wobble, cy - stemHeight * 0.7,
-    cx + stemBaseW * 0.8 - wobble, cy - stemHeight * 0.4,
-    cx + stemBaseW, cy
-  );
-  ctx.closePath();
-
-  const stemGrad = ctx.createLinearGradient(cx, cy, cx, stemTopY);
-  stemGrad.addColorStop(0, 'rgba(60, 40, 25, 0.9)');
-  stemGrad.addColorStop(0.3, 'rgba(110, 70, 45, 0.85)');
-  stemGrad.addColorStop(0.7, 'rgba(150, 95, 60, 0.75)');
-  stemGrad.addColorStop(1, 'rgba(180, 120, 80, 0.65)');
-  ctx.fillStyle = stemGrad;
-  ctx.fill();
-
-  // Cap
-  const capR = fbR * 2.0 * eased;
-  const capY = stemTopY;
-
-  // Rolling smoke puffs around the cap
-  for (let i = 0; i < 12; i++) {
-    const baseAngle = (Math.PI * 2 * i) / 12;
-    const swirl = elapsed * 0.3 + i * 0.5;
-    const angle = baseAngle + Math.sin(swirl) * 0.15;
-    const offsetR = capR * (0.45 + Math.sin(swirl * 1.3) * 0.1);
-    const px = cx + Math.cos(angle) * offsetR;
-    const py = capY + Math.sin(angle) * offsetR * 0.55 - capR * 0.1;
-    const pr = capR * (0.55 + Math.sin(swirl * 0.7) * 0.1);
-
-    const puffGrad = ctx.createRadialGradient(px, py - pr * 0.3, 0, px, py, pr);
-    puffGrad.addColorStop(0, 'rgba(230, 170, 90, 0.85)');
-    puffGrad.addColorStop(0.4, 'rgba(180, 110, 60, 0.75)');
-    puffGrad.addColorStop(0.8, 'rgba(90, 55, 35, 0.5)');
-    puffGrad.addColorStop(1, 'rgba(50, 30, 20, 0)');
-    ctx.fillStyle = puffGrad;
-    ctx.beginPath();
-    ctx.arc(px, py, pr, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  // Hot glow inside the cap (early phase)
-  if (progress < 0.6) {
-    const glowFade = 1 - progress / 0.6;
-    const glowGrad = ctx.createRadialGradient(cx, capY, 0, cx, capY, capR * 0.7);
-    glowGrad.addColorStop(0, `rgba(255, 220, 120, ${glowFade * 0.7})`);
-    glowGrad.addColorStop(0.5, `rgba(255, 130, 40, ${glowFade * 0.4})`);
-    glowGrad.addColorStop(1, 'rgba(255, 80, 0, 0)');
-    ctx.fillStyle = glowGrad;
-    ctx.beginPath();
-    ctx.arc(cx, capY, capR * 0.7, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  ctx.restore();
-}
-
-function updateAndDrawParticles(cx, cy, dt) {
-  const dtSec = dt / 1000;
-  ctx.save();
-  ctx.globalCompositeOperation = 'lighter';
-  for (let i = state.particles.length - 1; i >= 0; i--) {
-    const p = state.particles[i];
-    p.life += dt;
-    if (p.life > p.maxLife) { state.particles.splice(i, 1); continue; }
-
-    p.x += p.vx * dtSec;
-    p.y += p.vy * dtSec;
-    p.vy += 60 * dtSec;
-    p.vx *= 0.985;
-    p.vy *= 0.985;
-
-    const t = p.life / p.maxLife;
-    const alpha = 1 - t;
-    const px = cx + p.x;
-    const py = cy + p.y;
-    if (py > cy + 3) continue;
-
-    const grad = ctx.createRadialGradient(px, py, 0, px, py, p.size * 4);
-    grad.addColorStop(0, `hsla(${p.hue}, 100%, ${p.brightness}%, ${alpha})`);
-    grad.addColorStop(0.5, `hsla(${p.hue - 10}, 100%, ${p.brightness - 20}%, ${alpha * 0.5})`);
-    grad.addColorStop(1, `hsla(${p.hue}, 80%, 30%, 0)`);
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.arc(px, py, p.size * 4, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.restore();
-}
-
-function updateAndDrawDebris(cx, cy, dt) {
-  const dtSec = dt / 1000;
-  ctx.save();
-  for (let i = state.debris.length - 1; i >= 0; i--) {
-    const d = state.debris[i];
-    d.life += dt;
-    if (d.life > d.maxLife) { state.debris.splice(i, 1); continue; }
-
-    d.x += d.vx * dtSec;
-    d.y += d.vy * dtSec;
-    d.vy += 200 * dtSec;
-    d.rot += d.vrot * dtSec;
-
-    const t = d.life / d.maxLife;
-    const alpha = 1 - t * 0.7;
-    const px = cx + d.x;
-    const py = cy + d.y;
-    if (py > cy + 3) continue;
-
-    ctx.save();
-    ctx.translate(px, py);
-    ctx.rotate(d.rot);
-    ctx.fillStyle = `rgba(40, 25, 15, ${alpha})`;
-    ctx.fillRect(-d.size, -d.size, d.size * 2, d.size * 2);
-    ctx.restore();
-  }
-  ctx.restore();
-}
-
-function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
-function easeOutQuad(t) { return 1 - (1 - t) * (1 - t); }
-function easeOutExpo(t) { return t === 1 ? 1 : 1 - Math.pow(2, -10 * t); }
-
-// Events
-$('yieldSlider').addEventListener('input', (e) => {
-  state.yieldKt = sliderToYield(parseFloat(e.target.value));
-  updateAll(null);
-});
-$('detonate').addEventListener('click', detonate);
-$('reset').addEventListener('click', reset);
-window.addEventListener('resize', resizeCanvas);
-window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 100));
-
-// Init
-renderPresets();
-updateAll('hiroshima');
-resizeCanvas();
-requestAnimationFrame(draw);
-
-</script>
 </body>
 </html>
